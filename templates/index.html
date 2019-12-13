@@ -1,0 +1,605 @@
+{% extends "base.html" %}
+{% load staticfiles %}
+{% block content %}
+    <body>
+    <div id="app">
+        <el-row id="blank_row">
+            <el-col class="blank_row" :span="24"></el-col>
+        </el-row>
+        <el-row class="search_bar">
+            <el-input minlength="1" maxlength="20" placeholder="好奇岗位啥信息？一搜便知" v-model="search_key"
+                      @keyup.enter.native="search">
+                <el-button slot="append" icon="el-icon-search" v-on:click="search"></el-button>
+            </el-input>
+        </el-row>
+
+        <el-row class="footer_text">
+            <el-col :span="24">
+                <div id="search_job" class="grid-content bg-purple">仅供学习交流使用</div>
+            </el-col>
+        </el-row>
+
+        <el-row>
+            <el-col :span="24">
+                <div class="echarts" id="job_num"></div>
+            </el-col>
+        </el-row>
+
+        <el-row>
+            <el-col :span="24">
+                <div class="echarts" id="salary_range"></div>
+            </el-col>
+        </el-row>
+
+        <el-row>
+            <el-col :span="24">
+                <div class="echarts" id="salary_distributed"></div>
+            </el-col>
+        </el-row>
+
+        <el-row>
+            <el-col :span="24">
+                <div class="echarts" id="job_degree"></div>
+            </el-col>
+        </el-row>
+
+        <el-row id="init_job_detail" style="visibility: hidden;text-align: center;">
+            <el-col :span="24">
+                <el-button size="big" type="primary" plain v-on:click="init_job_detail">查看岗位明细</el-button>
+            </el-col>
+        </el-row>
+
+        <el-row id="init_table">
+            <el-col :span="24" style="text-align: center">
+                <div class="table">招聘信息明细表
+                    <el-button size="mini" type="primary" plain v-on:click="download_job_detail">下载明细</el-button>
+                    <el-table :data="job_detail_table" id="detail_table" style="width: 100%" height=600>
+                        <el-table-column fixed prop="job_title" label="职位名称" width="150"></el-table-column>
+                        <el-table-column sortable prop="job_salary_min" label="月薪低值" width="150"></el-table-column>
+                        <el-table-column sortable prop="job_salary_max" label="月薪高值" width="150"></el-table-column>
+                        <el-table-column sortable prop="company_name" label="公司名称" width="150"></el-table-column>
+                        <el-table-column sortable prop="job_summary" label="职位概述" width="700"></el-table-column>
+                        <el-table-column sortable prop="job_department" label="职位部门" width="150"></el-table-column>
+                        <el-table-column sortable prop="job_degree" label="学历要求" width="150"></el-table-column>
+                        <el-table-column sortable prop="job_work_year_min" label="工作经验" width="150"></el-table-column>
+                        <el-table-column sortable prop="job_major" label="专业要求" width="150"></el-table-column>
+                        <el-table-column sortable prop="job_address" label="工作地址" width="150"></el-table-column>
+                        <el-table-column sortable prop="job_hours_per_day" label="天工作时长" width="150"></el-table-column>
+                        <el-table-column sortable prop="job_days_per_week" label="周工作天数" width="150"></el-table-column>
+                        <el-table-column sortable prop="job_welfare" label="福利待遇" width="150"></el-table-column>
+                        <el-table-column sortable prop="job_language" label="语言要求" width="150"></el-table-column>
+                        {#                <el-table-column sortable prop="job_url" label="职位链接" width="150"></el-table-column>#}
+                    </el-table>
+                </div>
+            </el-col>
+        </el-row>
+
+        <el-row class="footer_text">
+            <el-col :span="24">
+                <div id="footer_text" class="grid-content bg-purple-light"></div>
+            </el-col>
+        </el-row>
+
+    </div>
+    </body>
+    <script>
+        var vm = new Vue({
+            el: "#app",
+            data: function () {
+                return {
+                    visible: false,
+                    job_detail_table: [],
+                    search_key: ""
+                }
+            },
+            mounted: function () {
+                this.table_check();
+            },
+            methods: {
+                search: function () {
+                    var key_word = this.search_key;
+                    if (key_word.replace(/(\s*)|(\s*$)/g, "").length === 0) {
+                        swal({
+                            type: "error",
+                            width: 300,
+                            confirmButtonText: "确定",
+                            text: "搜索内容不能为空！"
+                        })
+                    } else {
+                        document.getElementById("blank_row").style.display = "none";
+                        document.getElementById("init_table").style.visibility = "hidden";
+                        document.getElementById("init_job_detail").style.visibility = "hidden";
+                        // 基于准备好的dom，初始化echarts实例
+                        var jobNumChart = echarts.init(document.getElementById("job_num"), "macarons");
+
+                        // 指定图表的配置项和数据
+                        var job_num_option = {
+                            title: {
+                                text: "岗位数量趋势",
+                                x: "center",
+                                y: "top"
+                            },
+                            tooltip: {
+                                trigger: "axis",
+                                axisPointer: {type: "shadow"},
+                                textStyle: {align: "left"}
+                            },
+                            legend: {
+                                orient: "horizontal",
+                                x: "center",
+                                y: "bottom",
+                                data: ["岗位数量", "公司数量"]
+                            },
+                            toolbox: {
+                                show: true,
+                                feature: {
+                                    dataZoom: {
+                                        yAxisIndex: "none"
+                                    },
+                                    dataView: {readOnly: false},
+                                    magicType: {type: ["line", "bar"]},
+                                    restore: {},
+                                    saveAsImage: {}
+                                }
+                            },
+                            xAxis: {
+                                data: []
+                            },
+                            yAxis: [{
+                                min: 0,
+                                max: 1000,
+                                type: "value",
+                                axisLabel: {
+                                    formatter: "{value}"
+                                }
+                            }],
+                            series: [
+                                {
+                                    name: "岗位数量",
+                                    type: "line",
+                                    data: [],
+                                    symbol: "none",
+                                    itemStyle: {normal: {color: "#EF55FF"}},
+                                    markPoint: {
+                                        data: [
+                                            {type: "max", name: "最大值"},
+                                            {type: "min", name: "最小值"}
+                                        ]
+                                    },
+                                    markLine: {
+                                        data: [
+                                            {type: "average", name: "平均值"}
+                                        ]
+                                    }
+                                },
+                                {
+                                    name: "公司数量",
+                                    type: "line",
+                                    data: [],
+                                    symbol: "none",
+                                    itemStyle: {normal: {color: "#76B3FF"}},
+                                    markPoint: {
+                                        data: [
+                                            {type: "max", name: "最大值"},
+                                            {type: "min", name: "最小值"}
+                                        ]
+                                    },
+                                    markLine: {
+                                        data: [
+                                            {type: "average", name: "平均值"}
+                                        ]
+                                    }
+                                }
+                            ]
+                        };
+
+                        var salaryRangeChart = echarts.init(document.getElementById("salary_range"), "macarons");
+
+                        var salary_range_option = {
+                            title: {
+                                text: "薪酬范围趋势",
+                                x: "center",
+                                y: "top"
+                            },
+                            tooltip: {
+                                trigger: "axis",
+                                axisPointer: {type: "shadow"},
+                                textStyle: {align: "left"}
+                            },
+                            legend: {
+                                orient: "horizontal",
+                                x: "center",
+                                y: "bottom",
+                                data: ["低薪均值", "高薪均值", "工作年限众数"]
+                            },
+                            toolbox: {
+                                show: true,
+                                feature: {
+                                    dataZoom: {
+                                        yAxisIndex: "none"
+                                    },
+                                    dataView: {readOnly: false},
+                                    magicType: {type: ["line", "bar"]},
+                                    restore: {},
+                                    saveAsImage: {}
+                                }
+                            },
+                            xAxis: {
+                                data: []
+                            },
+                            yAxis: [
+                                {
+                                    min: 0,
+                                    max: 1000,
+                                    name: "薪酬（元）",
+                                    type: "value",
+                                    axisLabel: {formatter: "{value}"}
+                                },
+                                {
+                                    min: 0,
+                                    max: 10,
+                                    name: "年限",
+                                    type: "value",
+                                    axisLabel: {formatter: "{value}"}
+                                }],
+                            series: [
+                                {
+                                    name: "低薪均值",
+                                    type: "line",
+                                    data: [],
+                                    symbol: "none",
+                                    itemStyle: {normal: {color: "#76B3FF"}},
+                                    markPoint: {
+                                        data: [
+                                            {type: "max", name: "最大值"},
+                                            {type: "min", name: "最小值"}
+                                        ]
+                                    },
+                                    markLine: {
+                                        data: [
+                                            {type: "average", name: "平均值"}
+                                        ]
+                                    }
+                                },
+                                {
+                                    name: "高薪均值",
+                                    type: "line",
+                                    data: [],
+                                    symbol: "none",
+                                    itemStyle: {normal: {color: "#EF55FF"}},
+                                    markPoint: {
+                                        data: [
+                                            {type: "max", name: "最大值"},
+                                            {type: "min", name: "最小值"}
+                                        ]
+                                    },
+                                    markLine: {
+                                        data: [
+                                            {type: "average", name: "平均值"}
+                                        ]
+                                    }
+                                },
+                                {
+                                    name: "工作年限众数",
+                                    type: "bar",
+                                    data: [],
+                                    itemStyle: {normal: {color: "#d7d7d7"}},
+                                    yAxisIndex: 1,
+                                    symbol: "none"
+                                }
+                            ]
+                        };
+
+                        {#获取历史招聘记录信息#}
+                        $.ajax({
+                                url: "{% url 'job_summary' %}",
+                                type: "POST",
+                                data: {"key_word": key_word},
+                                beforeSend: function (xhr, settings) {
+                                    xhr.setRequestHeader("X-CSRFToken", "{{ csrf_token }}");
+                                },
+                                success: function (data) {
+                                    if (data.status === "success") {
+                                        document.getElementById("job_num").style.visibility = "visible";
+                                        document.getElementById("salary_range").style.visibility = "visible";
+                                        document.getElementById("search_job").innerText = "岗位关键字：【" + key_word + "】相关信息如下";
+                                        document.getElementById("footer_text").innerText = "仅供学习交流使用";
+                                        var summary_info = eval(data.summary_info);
+                                        job_num_option.series[0].data = summary_info[0];
+                                        job_num_option.series[1].data = summary_info[1];
+                                        job_num_option.xAxis.data = summary_info[6];
+                                        job_num_option.yAxis[0].min = Math.min(summary_info[1]);
+                                        job_num_option.yAxis[0].max = Math.max(summary_info[0]);
+                                        jobNumChart.setOption(job_num_option);
+
+                                        salary_range_option.series[0].data = summary_info[2];
+                                        salary_range_option.series[1].data = summary_info[3];
+                                        salary_range_option.series[2].data = summary_info[4];
+                                        salary_range_option.xAxis.data = summary_info[6];
+                                        salary_range_option.yAxis[0].min = Math.min(summary_info[2]);
+                                        salary_range_option.yAxis[0].max = Math.max(summary_info[3]);
+                                        salaryRangeChart.setOption(salary_range_option);
+                                    } else {
+                                        document.getElementById("job_num").style.visibility = "hidden";
+                                        document.getElementById("salary_range").style.visibility = "hidden";
+                                        swal({
+                                            type: "error",
+                                            width: 300,
+                                            text: "查无" + key_word + "历史招聘信息"
+                                        })
+                                    }
+                                }
+                            }
+                        );
+
+                        var salaryDistributedChart = echarts.init(document.getElementById("salary_distributed"), "macarons");
+
+                        var salary_distributed_option = {
+                            title: {
+                                text: "当前薪酬分布",
+                                x: "center",
+                                y: "top"
+                            },
+                            tooltip: {
+                                trigger: "axis",
+                                axisPointer: {type: "shadow"},
+                                textStyle: {align: "left"}
+                            },
+                            legend: {
+                                orient: "horizontal",
+                                x: "center",
+                                y: "bottom",
+                                data: ["低薪", "高薪"]
+                            },
+                            toolbox: {
+                                show: true,
+                                feature: {
+                                    dataZoom: {
+                                        yAxisIndex: "none"
+                                    },
+                                    dataView: {readOnly: false},
+                                    magicType: {type: ["line", "bar"]},
+                                    restore: {},
+                                    saveAsImage: {}
+                                }
+                            },
+                            xAxis: {
+                                axisLabel: {interval: 0},
+                                data: []
+                            },
+                            yAxis: [
+                                {
+                                    min: 0,
+                                    max: 1000,
+                                    type: "value",
+                                    axisLabel: {formatter: "{value}"}
+                                }],
+                            series: [
+                                {
+                                    name: "低薪",
+                                    type: "bar",
+                                    data: [],
+                                    label: {normal: {show: true, position: "top"}},
+                                    itemStyle: {normal: {color: "#76B3FF"}},
+                                    symbol: "none"
+                                },
+                                {
+                                    name: "高薪",
+                                    type: "bar",
+                                    data: [],
+                                    itemStyle: {normal: {color: "#EF55FF"}},
+                                    label: {normal: {show: true, position: "top"}},
+                                    symbol: "none"
+                                }
+                            ]
+                        };
+
+                        var jobDegreeChart = echarts.init(document.getElementById("job_degree"), "macarons");
+
+                        var job_degree_option = {
+                            title: {
+                                text: "学历要求",
+                                x: "center",
+                                y: "top"
+                            },
+                            tooltip: {
+                                trigger: "item",
+                                formatter: "{a} <br/>{b}: {c} ({d}%)"
+                            },
+                            legend: {
+                                orient: "vertical",
+                                x: "left",
+                                y: "center",
+                                data: []
+                            },
+                            toolbox: {
+                                show: true,
+                                feature: {
+                                    dataView: {readOnly: false},
+                                    restore: {},
+                                    saveAsImage: {}
+                                }
+                            },
+                            series: [
+                                {
+                                    name: "学历要求",
+                                    radius: ["50%", "70%"],
+                                    type: "pie",
+                                    data: [],
+                                    avoidLabelOverlap: false,
+                                    label: {
+                                        normal: {
+                                            show: false,
+                                            position: "center"
+                                        },
+                                        emphasis: {
+                                            show: true,
+                                            textStyle: {
+                                                fontSize: "30",
+                                                fontWeight: "bold"
+                                            }
+                                        }
+                                    },
+                                    labelLine: {
+                                        normal: {
+                                            show: false
+                                        }
+                                    }
+                                }
+                            ]
+                        };
+
+                        {#获取当前招聘信息#}
+                        $.ajax({
+                                url: "{% url 'job_detail' %}",
+                                type: "GET",
+                                data: {"key_word": key_word},
+                                beforeSend: function (xhr, settings) {
+                                    xhr.setRequestHeader("X-CSRFToken", "{{ csrf_token }}");
+                                },
+                                success: function (data) {
+                                    if (data.status === "success") {
+                                        document.getElementById("salary_distributed").style.visibility = "visible";
+                                        document.getElementById("job_degree").style.visibility = "visible";
+                                        document.getElementById("init_job_detail").style.visibility = "visible";
+                                        var job_detail = eval(data.job_detail);
+                                        salary_distributed_option.series[0].data = job_detail[1];
+                                        salary_distributed_option.series[1].data = job_detail[2];
+                                        salary_distributed_option.xAxis.data = job_detail[0];
+                                        salary_distributed_option.yAxis[0].min = Math.min(job_detail[1]);
+                                        salary_distributed_option.yAxis[0].max = Math.max(job_detail[2]);
+                                        salaryDistributedChart.setOption(salary_distributed_option);
+
+                                        job_degree_option.series[0].data = job_detail[3][0];
+                                        job_degree_option.legend.data = job_detail[3][1];
+                                        jobDegreeChart.setOption(job_degree_option);
+                                        swal({
+                                            type: "success",
+                                            width: 300,
+                                            confirmButtonText: "知道啦",
+                                            allowEnterKey: false,
+                                            text: "页面底部可查看具体招聘信息"
+                                        });
+                                    } else {
+                                        document.getElementById("salary_distributed").style.visibility = "hidden";
+                                        document.getElementById("job_degree").style.visibility = "hidden";
+                                        swal({
+                                            type: "error",
+                                            width: 300,
+                                            text: "查无" + key_word + "相关岗位信息"
+                                        })
+                                    }
+                                }
+                            }
+                        );
+                        window.onresize = function () {
+                            jobNumChart.resize();
+                            salaryRangeChart.resize();
+                            salaryDistributedChart.resize();
+                            jobDegreeChart.resize();
+                        }
+                    }
+                },
+                table_check: function () {
+                    var key_word = this.search_key;
+                    if (key_word.replace(/(\s*)|(\s*$)/g, "").length === 0) {
+                        document.getElementById("init_table").style.visibility = "hidden";
+                    }
+                },
+                init_job_detail: function () {
+                    var key_word = this.search_key;
+                    if (key_word.replace(/(\s*)|(\s*$)/g, "").length === 0) {
+                        swal({
+                            type: "error",
+                            width: 300,
+                            confirmButtonText: "确定",
+                            text: "搜索内容不能为空！"
+                        })
+                    } else {
+                        $.ajax({
+                            url: "{% url 'job_detail_table' %}",
+                            type: "GET",
+                            data: {"key_word": key_word},
+                            beforeSend: function (xhr, settings) {
+                                xhr.setRequestHeader("X-CSRFToken", "{{ csrf_token }}")
+                            },
+                            success: function (data) {
+                                if (data.status === "success") {
+                                    document.getElementById("init_table").style.visibility = "visible";
+                                    document.getElementById("init_job_detail").style.visibility = "hidden";
+                                    vm.job_detail_table = [];
+                                    var job_detail = eval(data.job_detail);
+                                    for (var i = 0; i < job_detail.length; i++) {
+                                        Vue.set(vm.job_detail_table, i, job_detail[i])
+                                    }
+                                } else {
+                                    swal({
+                                        type: "error",
+                                        width: 300,
+                                        text: "查无" + key_word + "相关岗位信息"
+                                    })
+                                }
+                            }
+                        });
+                    }
+                },
+                download_job_detail: function () {
+                    var key_word = this.search_key;
+                    if (key_word.replace(/(\s*)|(\s*$)/g, "").length === 0) {
+                        swal({
+                            type: "error",
+                            width: 300,
+                            confirmButtonText: "确定",
+                            text: "搜索内容不能为空！"
+                        })
+                    } else {
+                        swal({
+                            width: 300,
+                            confirmButtonText: "确定",
+                            cancelButtonText: "取消",
+                            allowOutsideClick: false,
+                            allowEscapeKey: false,
+                            imageUrl: "{% static 'img/qingboy_code.png' %}",
+                            text: "关注公众号获取验证码",
+                            input: "text",
+                            inputPlaceholder: "请输入验证码",
+                            preConfirm: function (value) {
+                                if (!value) {
+                                    Swal.showValidationError('验证码不能为空！')
+                                }
+                            }
+                        }).then(function (result) {
+                            $.ajax({
+                                type: "GET",
+                                url: "{% url 'users:check_code_valid' %}",
+                                data: {
+                                    "weixin_fork_code": result.value
+                                },
+                                async: true,
+                                beforeSend: function (xhr, settings) {
+                                    xhr.setRequestHeader("X-CSRFToken", "{{ csrf_token }}");
+                                },
+                                success: function (data) {
+                                    if (data.status === "success") {
+                                        window.location.href = "http://qingboy.com/download_job_detail/?key_word=" + key_word.replace(/\+/g, '%2B') + "&download_auth_code=" + data.download_auth_code;
+                                    } else {
+                                        swal({
+                                            width: 300,
+                                            confirmButtonText: "确定",
+                                            cancelButtonText: "取消",
+                                            allowOutsideClick: false,
+                                            allowEscapeKey: false,
+                                            imageUrl: "{% static 'img/qingboy_code.png' %}",
+                                            html: '<p style="color: red">验证码无效！</br>请关注公众号获取验证码<p>',
+                                        })
+                                    }
+                                }
+                            })
+                        })
+                    }
+                }
+            }
+        })
+
+    </script>
+{% endblock %}

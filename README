@@ -1,0 +1,31 @@
+一 基础语言环境
+    1. python3.6
+二、外部依赖：
+    1. redis-4.0.2：
+        a. 安装：tar zxvf redis-4.0.2.tar.gz && cd redis-4.0.2/ && make && cd src && make install PREFIX=/usr/local/redis
+        b. 配置文件：conf 目录下，不同redis 进程，不同redis_for_*.conf
+    2. mysql-5.5.13：
+        a. 配置文件模板：conf/my.cnf
+        b. 安装：
+            i. MySQL-server-5.5.53-1.el6.x86_64.rpm
+            ii. MySQL-client-5.5.53-1.el6.x86_64.rpm
+            iii. MySQL-devel-5.5.53-1.el6.x86_64.rpm
+            iv. MySQL-shared-compat-5.5.53-1.el6.x86_64.rpm
+            v. mysql-connector-c-6.0.2-linux-rhel5-x86-64bit.tar.gz
+    3. percona-xtrabackup 数据库热备：
+        a. MySQL-shared-compat-5.5.53
+        b. wget http://ftp.tu-chemnitz.de/pub/linux/dag/redhat/el6/en/x86_64/rpmforge/RPMS/libev-4.15-1.el6.rf.x86_64.rpm && rpm -ivh libev-4.15-1.el6.rf.x86_64.rpm
+        c. yum install perl-DBD-mysql -y
+        d. wget https://www.percona.com/downloads/XtraBackup/Percona-XtraBackup-2.4.8/binary/redhat/6/x86_64/percona-xtrabackup-24-2.4.8-1.el6.x86_64.rpm && rpm -ivh percona-xtrabackup-24-2.4.8-1.el6.x86_64.rpm
+    4. percona-toolkit 数据库慢查询检查：
+        a. wget percona-toolkit-3.0.13-1.el6.x86_64.rpm
+        b. yum localinstall percona-toolkit-3.0.13-1.el6.x86_64.rpm
+    5. python库依赖：
+        pip install -r conf/requirements.txt
+    6. 前端页面样式库依赖详见static目录
+
+三、主要功能：
+    1. 定时任务触发调用scrapyd全量获取招聘网站招聘信息，见另外获取数据项目
+    2. 访问首页输入职位关键字，获取对应职位历史招聘趋势，及当前招聘形式。详见图表
+    3. 可点击查看岗位详情，获取明细信息
+    4. 明细信息展示后可点击下载明细输入验证码后（可扫码关注获取）导出Excel表格

@@ -1,0 +1,79 @@
+/*index.html*/
+body > .el-container {
+    width: 90%;
+    height: 600px;
+}
+
+.el-main {
+    height: 450px;
+    background-color: rgba(255, 122, 0, 0);
+    color: #b4b4b4;
+    text-align: center;
+    line-height: 90%;
+    font-size: 10px;
+}
+
+.el-footer {
+    color: #b4b4b4;
+    text-align: center;
+    line-height: 10%;
+    font-size: 10px;
+}
+
+/*#input-bar{*/
+/*    max-width: 500px;*/
+/*    position: relative;*/
+/*    top: 50%;*/
+/*    align-items: center;*/
+/*}*/
+
+.el-input{
+    max-width: 400px;
+    border-color: black;
+}
+
+.blank_row{
+    height: 100px;
+}
+
+
+.el-row {margin-bottom: 20px;}
+.el-col {border-radius: 4px;}
+
+/*job_summary.html*/
+
+.search_bar{
+    margin: 30px;
+    text-align: center;
+}
+
+.charts_title{
+    margin: 10px;
+    text-align: center;
+}
+
+.echarts{
+    height:400px;
+    width: 90%;
+    margin: 10px;
+    text-align: center;
+}
+
+.table{
+    width: 90%;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+/*.demo-table-expand {font-size: 0;}*/
+
+/*.demo-table-expand label {width: 90px;color: #99a9bf;}*/
+
+/*.demo-table-expand .el-form-item {margin-right: 0;margin-bottom: 0;width: 50%;}*/
+
+.footer_text {
+    color: #b4b4b4;
+    text-align: center;
+    line-height: 10%;
+    font-size: 10px;
+}

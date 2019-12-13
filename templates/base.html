@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html>
+{% load staticfiles %}
+<head>
+  <meta charset="UTF-8">
+    <title>{% block title %}全职搜{% endblock %}</title>
+    <link rel="stylesheet" href="https://unpkg.com/element-ui@2.8.2/lib/theme-chalk/index.css">
+    <link rel="stylesheet" href="{% static 'css/main.css' %}">
+    <link rel="stylesheet" href="{% static 'css/sweetalert2.css' %}">
+    <script src="https://unpkg.com/vue@2.6.10/dist/vue.js"></script>
+    <script src="https://unpkg.com/element-ui@2.8.2/lib/index.js"></script>
+    <script type="text/javascript" src="{% static 'js/jquery.min@1.9.1.js' %}"></script>
+    <script type="text/javascript" src="{% static 'js/sweetalert2v7.18.0.all.js' %}"></script>
+    <script src="{% static 'js/echarts.min@2.0.js' %}"></script>
+    <script src="{% static 'js/macarons.js' %}"></script>
+</head>
+{% block custom_css %}{% endblock %}
+{% block custom_js %}{% endblock %}
+{% block content %}{% endblock %}
+</html>
