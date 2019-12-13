@@ -75,7 +75,7 @@ PyYAML==3.12
 queuelib==1.5.0
 redis==3.2.1
 reload==0.9
-requests==2.18.4
+requests==2.20.0
 scipy==1.2.1
 Scrapy==1.6.0
 scrapy-djangoitem==1.1.1
