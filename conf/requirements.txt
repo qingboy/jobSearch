@@ -6,7 +6,7 @@ Automat==0.7.0
 beautifulsoup4==4.6.0
 billiard==3.5.0.5
 bs4==0.0.1
-celery==4.2.2
+celery==5.2.2
 certifi==2017.11.5
 cffi==1.11.5
 chardet==3.0.4
