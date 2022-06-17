@@ -77,7 +77,7 @@ redis==3.2.1
 reload==0.9
 requests==2.18.4
 scipy==1.2.1
-Scrapy==1.6.0
+Scrapy==2.6.1
 scrapy-djangoitem==1.1.1
 scrapyd==1.2.0
 scrapyd-client==1.1.0
